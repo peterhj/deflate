@@ -84,7 +84,7 @@ mod writer;
 mod zlib;
 
 use std::io;
-use std::io::Write;
+use std::io::{Read, Write};
 
 #[cfg(feature = "gzip")]
 use gzip_header::Crc;
@@ -164,6 +164,14 @@ pub fn deflate_bytes(input: &[u8]) -> Vec<u8> {
     deflate_bytes_conf(input, Compression::Default)
 }
 
+pub fn deflate_file<P: AsRef<std::path::Path>>(path: P) -> io::Result<Vec<u8>> {
+  let mut file = std::fs::File::open(path)?;
+  let mut buf = Vec::new();
+  file.read_to_end(&mut buf)?;
+  drop(file);
+  Ok(deflate_bytes(&buf))
+}
+
 /// Compress the given slice of bytes with DEFLATE compression, including a zlib header and trailer.
 ///
 /// Returns a `Vec<u8>` of the compressed data.
@@ -215,6 +223,14 @@ pub fn deflate_bytes_zlib_conf<O: Into<CompressionOptions>>(input: &[u8], option
 /// ```
 pub fn deflate_bytes_zlib(input: &[u8]) -> Vec<u8> {
     deflate_bytes_zlib_conf(input, Compression::Default)
+}
+
+pub fn deflate_file_zlib<P: AsRef<std::path::Path>>(path: P) -> io::Result<Vec<u8>> {
+  let mut file = std::fs::File::open(path)?;
+  let mut buf = Vec::new();
+  file.read_to_end(&mut buf)?;
+  drop(file);
+  Ok(deflate_bytes_zlib(&buf))
 }
 
 /// Compress the given slice of bytes with DEFLATE compression, including a gzip header and trailer
@@ -283,6 +299,14 @@ pub fn deflate_bytes_gzip_conf<O: Into<CompressionOptions>>(
 #[cfg(feature = "gzip")]
 pub fn deflate_bytes_gzip(input: &[u8]) -> Vec<u8> {
     deflate_bytes_gzip_conf(input, Compression::Default, GzBuilder::new())
+}
+
+pub fn deflate_file_gzip<P: AsRef<std::path::Path>>(path: P) -> io::Result<Vec<u8>> {
+  let mut file = std::fs::File::open(path)?;
+  let mut buf = Vec::new();
+  file.read_to_end(&mut buf)?;
+  drop(file);
+  Ok(deflate_bytes_gzip(&buf))
 }
 
 #[cfg(test)]
